@@ -280,6 +280,66 @@ app.post("/generate_news_meme", async (req, res) => {
   }
 });
 
+app.post("/puch_generate_meme", async (req, res) => {
+  try {
+    memeService["validateEnvVars"]();
+
+    const topic = req.body.topic || req.body.params?.topic || "";
+    const articleIndex = req.body.articleIndex || 0;
+
+    if (!topic) {
+      throw new Error("Topic is required");
+    }
+
+    const news = await memeService.fetchIndianNews(topic);
+    if (!news.length) {
+      throw new Error(`No news articles found for topic: ${topic}`);
+    }
+    const article = news[articleIndex];
+    if (!article?.title || !article?.description) {
+      throw new Error("Selected article is missing title/description");
+    }
+
+    const templates = await memeService.fetchImgflipTemplates();
+    const templateIds = templates.map((t) => t.id);
+
+    const caption = await memeService.generateCaption(
+      article.title,
+      article.description,
+      templateIds
+    );
+    if (!caption) {
+      throw new Error("Failed to generate meme caption");
+    }
+
+    const memeUrl = await memeService.generateMeme(
+      caption.image,
+      caption.topText,
+      caption.bottomText
+    );
+    if (!memeUrl) {
+      throw new Error("Failed to create meme image");
+    }
+
+    res.json({
+      success: true,
+      article: {
+        title: article.title,
+        description: article.description,
+        link: article.link || null,
+      },
+      caption,
+      memeUrl,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Meme Generator API running on port ${PORT}`);
