@@ -9,6 +9,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.2"
+    "@modelcontextprotocol/sdk": "^1.17.2",
+    "dotenv": "^17.2.1"
   }
 }
